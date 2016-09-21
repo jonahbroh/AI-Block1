@@ -3,6 +3,7 @@ import java.util.ArrayList;
 import java.lang.Math;
 
 public class PruneStableBot extends OthelloPlayer {
+    //FINAL BOT
 
     public boolean taunted = false;
     public boolean conceded = false;
@@ -22,6 +23,8 @@ public class PruneStableBot extends OthelloPlayer {
         super(_color);
     }
 
+    //Code from Zack Eberhardt
+    //Gets a score from the board, prioritizing locations that can't be overturned
     public int getNumStable(int color, OthelloBoard board){
         int[][] checked = new int[board.size][board.size];
         int depth = 0;
@@ -111,6 +114,7 @@ public class PruneStableBot extends OthelloPlayer {
         return stable;
     }
 
+    //Runs through tbe board according to a minimax algorithm with alpha-beta pruning based on the above heuristics
     public int getValue(OthelloBoard board, OthelloMove m, int depth, int min, int max){
 
         Integer value = null;
@@ -212,6 +216,7 @@ public class PruneStableBot extends OthelloPlayer {
         time += ((double)System.currentTimeMillis()-start);
         avg = (time/moveNum)/1000.0;
 
+        //Increases depth if average time is under .8 seconds, decreases depth if average time is over 1 second
         if(avg > 1 && SEARCH_DEPTH> SEARCH_MIN) SEARCH_DEPTH --;
         else if(avg <=.8 && SEARCH_DEPTH < SEARCH_MAX) SEARCH_DEPTH ++;
         // System.out.println(avg + " " + SEARCH_DEPTH);

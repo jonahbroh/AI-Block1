@@ -136,9 +136,10 @@ public class GA extends JComponent{
 		Random rand = new Random();
 
     // Adjust these parameters as necessary for your simulation
-    double MUTATION_RATE = 0.01;
+    double MUTATION_RATE = 0.5;
+		double MIN_MUTATION_RATE = .05;
     double CROSSOVER_RATE = 0.6;
-    int MAX_POLYGON_POINTS = 5;
+    int MAX_POLYGON_POINTS = 3; //Fewer points better for simple pattern
     int MAX_POLYGONS = 10;
 
     public GA(GACanvas _canvas, BufferedImage _realPicture) {
@@ -157,6 +158,7 @@ public class GA extends JComponent{
     // YOUR CODE GOES HERE!
 
 		//Partially taken from https://rogeralsing.com/2008/12/09/genetic-programming-mona-lisa-faq/
+		//Rates fitness based on Euclidian color distance from 1000 random pixels
 		public double fitness(BufferedImage image){
 			double fitness = 0;
 			for(int x = 0; x < 1000; x++){
@@ -170,11 +172,7 @@ public class GA extends JComponent{
 				double deltaGreen = cSol.getGreen() - cGen.getGreen();
 				fitness += Math.sqrt(deltaRed*deltaRed + deltaBlue*deltaBlue + deltaGreen*deltaGreen);
 			}
-			// System.out.println(fitness);
-			// double fit = (255*255*3*100) / fitness;
 			double fit = fitness/1000;
-			// System.out.println(1/Math.log(fit));
-			// System.out.println(fitness + " " + 1/Math.log(fit));
 			return (1/fit);
 		}
 
@@ -220,22 +218,22 @@ public class GA extends JComponent{
 				ind++;
 				range -= populationFitnesses.get(ind);
 			}
-			// getBestSolution();
-			// System.out.println("parent " + populationFitnesses.get(ind));
 			return population.get(ind);
 		}
 
 		public GASolution crossover(GASolution sa, GASolution sb){
 			GASolution cross = new GASolution(width, height);
-			for(int i = 0; i < MAX_POLYGONS/2; i++){
+			int rate = rand.nextInt(MAX_POLYGONS);
+			for(int i = 0; i < rate; i++){
 				cross.addPolygon(sa.getShapes().get(i).cloneMe());
 			}
-			for(int i = MAX_POLYGONS/2; i < MAX_POLYGONS; i++){
+			for(int i = rate; i < MAX_POLYGONS; i++){
 				cross.addPolygon(sb.getShapes().get(i).cloneMe());
 			}
 			return cross;
 		}
 
+		//Mutates color and position with a normal distribution centered on the current color/position
 		public GASolution mutate(GASolution child){
 			GASolution newChild = new GASolution(width, height);
 			for(MyPolygon pol : child.getShapes()){
@@ -243,8 +241,8 @@ public class GA extends JComponent{
 				int[] yCoord = pol.getPolygon().ypoints;
 				if(rand.nextDouble() < MUTATION_RATE){
 					int coord = rand.nextInt(MAX_POLYGON_POINTS);
-					pol.polygon.xpoints[coord] += (int)(rand.nextGaussian()*width/2);
-					pol.polygon.ypoints[coord] += (int)(rand.nextGaussian()*height/2);
+					pol.polygon.xpoints[coord] += (int)(rand.nextGaussian()*width/4);
+					pol.polygon.ypoints[coord] += (int)(rand.nextGaussian()*height/4);
 				}
 
 				if(rand.nextDouble() < MUTATION_RATE){
@@ -270,10 +268,6 @@ public class GA extends JComponent{
 					Color newB = new Color(pol.getColor().getRed(), pol.getColor().getGreen(), blue);
 					pol.setColor(newB);
 				}
-				// if(rand.nextDouble() < MUTATION_RATE){
-				// 	Color newc = new Color(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255));
-				// 	pol.setColor(newc);
-				// }
 			}
 			return child;
 		}
@@ -311,9 +305,13 @@ public class GA extends JComponent{
 				generateNewPopulation();
 				generatePopulationFitness();
 				if((i % 100) == 0){
+					System.out.println(i);
 					canvas.setImage(getBestSolution());
 					// canvas.paintComponent(canvas.getGraphics());
 					canvas.repaint();
+				}
+				if(MUTATION_RATE > MIN_MUTATION_RATE){
+					MUTATION_RATE *= .99;
 				}
 			}
 		}

@@ -7,9 +7,11 @@ np.random.seed(42) # Get the same random numbers every time
 
 ################################################################
 ### Load the dataset
-my_data = np.genfromtxt('dija_temp.csv', delimiter=';', skip_header=1)[:10]
-djiac = my_data[:, 1]
-high_temp = my_data[:, 3] - my_data[:, 2]
+my_data = np.genfromtxt('djia_temp.csv', delimiter=';', skip_header=1)[:21]
+djiac = my_data[:, 1]/1000
+print djiac
+high_temp = my_data[:, 2] - my_data[:, 3]
+print high_temp
 
 
 
@@ -17,32 +19,36 @@ high_temp = my_data[:, 3] - my_data[:, 2]
 ### Init the model parameters
 weight = np.random.rand(1)
 bias = np.random.rand(1)
-print (weight, bias)
+print weight, bias
 
 
 ################################################################
 ### How do we change the weight and the bias to make the line's fit better?
 learning_rate = 0.05
-
-init_cost = np.sum(np.power((hs_gpa*weight+bias) - col_gpa, 2))
-
-error = (hs_gpa*weight+bias) - col_gpa
-
-weight = weight - np.sum(learning_rate * error * hs_gpa / len(hs_gpa))
-weight = weight - np.sum(learning_rate * error * 1.0 / len(hs_gpa))
-
-end_cost = np.sum(np.power((hs_gpa*weight+bias) - col_gpa, 2))
+final_rate = .001
 
 
-print (init_cost)
-print (end_cost)
-print (end_end_cost)
+
+for i in range(1000):
+    # for i in range(len(djiac)):
+    if learning_rate > final_rate:
+        learning_rate *= .995
+    error = (high_temp*weight+bias) - djiac
+    print error
+    weight = weight - np.sum(learning_rate * error * high_temp / len(high_temp))
+    print weight, "a"
+    bias = bias - np.sum(learning_rate * error * 1.0 / len(high_temp))
+
+
+
+# print (end_end_cost)
 
 ################################################################
 ### Graph the dataset along with the line defined by the model
 #
-# xs = np.arange(0, 5)
-# ys = xs * weight + bias
-#
-# plt.plot(hs_gpa, col_gpa, 'r+', xs, ys, 'g-')
-# plt.show()
+xs = np.arange(-20, 20)
+print xs
+ys = xs * weight + bias
+
+plt.plot(high_temp, djiac, 'r+', xs, ys, 'g-')
+plt.show()

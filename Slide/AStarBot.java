@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.ArrayDeque;
+import java.util.PriorityQueue;
 import java.util.HashSet;
 import java.util.*;
 
@@ -33,17 +34,22 @@ import java.util.*;
 class BoardNode{
   SlidingBoard board;
   ArrayDeque queue;
+  int size;
+  SlidingMove move;
 
   //Each node contains a board state and a queue of moves that lead to that board state
-  public BoardNode(SlidingBoard sb){
+  public BoardNode(SlidingBoard sb, int s){
     this.board = new SlidingBoard(sb.size);
     board.setBoard(sb);
+    this.size = s + 1;
     this.queue = new ArrayDeque<SlidingMove>();
   }
 
-  public BoardNode(SlidingBoard sb, ArrayDeque q){
+  public BoardNode(SlidingBoard sb, ArrayDeque q, int s, SlidingMove m){
     this.board = new SlidingBoard(sb.size);
     board.setBoard(sb);
+    this.size = s + 1;
+    this.move = m;
     this.queue = q.clone();
     // this.queue = new ArrayDeque<SlidingMove>();
     // this.queue = q;
@@ -88,24 +94,24 @@ class AStarBot extends SlidingPlayer {
       //Begins with one node containing the initial state
       if(board.isSolved())
         return null;
-      Deque<BoardNode> boardStack = new ArrayDeque<BoardNode>();
-      BoardNode firstNode = new BoardNode(board);
-      boardStack.push(firstNode);
+      PriorityQueue<BoardNode> boardStack = new PriorityQueue<BoardNode>(new MoveComparator(board));
+      BoardNode firstNode = new BoardNode(board, 0);
+      boardStack.add(firstNode);
       //Maintains a HashSet containing already encountered board states
       boardStates.add(firstNode.board.toString());
 
       while(true){
         //Removes the head of the queue and prepares all possible moves
-        BoardNode nextBoard = boardStack.pop();
+        // Collections.sort(boardStack, new MoveComparator(board));
+        BoardNode nextBoard = boardStack.poll();
         ArrayList<SlidingMove> legalMoves = nextBoard.board.getLegalMoves();
         int i;
-        Collections.sort(legalMoves, new MoveComparator(board));
         for(i = 0; i < legalMoves.size(); i++){
-          BoardNode newBoard = new BoardNode(nextBoard.board, nextBoard.queue);
+          BoardNode newBoard = new BoardNode(nextBoard.board, nextBoard.queue, nextBoard.size, legalMoves.get(i));
           int und = newBoard.doMove(legalMoves.get(i));
           if(!boardStates.contains(newBoard.board.toString())){
             newBoard.addMove(legalMoves.get(i));
-            boardStack.push(newBoard);
+            boardStack.add(newBoard);
             boardStates.add(newBoard.board.toString());
             if(newBoard.board.isSolved()){
               return newBoard.queue;
@@ -124,7 +130,7 @@ class AStarBot extends SlidingPlayer {
         return move;
     }
 }
-class MoveComparator implements Comparator<SlidingMove> {
+class MoveComparator implements Comparator<BoardNode> {
   SlidingBoard board;
 
   MoveComparator(SlidingBoard b){
@@ -168,15 +174,16 @@ class MoveComparator implements Comparator<SlidingMove> {
     return total;
   }
 
-  public int compare(SlidingMove m1, SlidingMove m2){
+  //Compares BoardNodes based on their distance from the solution
+  public int compare(BoardNode m1, BoardNode m2){
     SlidingBoard testBoard = new SlidingBoard(board.size);
     testBoard.setBoard(board);
     SlidingBoard solvedBoard = new SlidingBoard(board.size);
-    int und = testBoard.doMove(m1);
-    int dist1 = guessDistance(solvedBoard, testBoard);
-    testBoard.undoMove(m1, und);
-    und = testBoard.doMove(m2);
-    int dist2 = guessDistance(solvedBoard,testBoard);
+    int und = testBoard.doMove(m1.move);
+    int dist1 = guessDistance(solvedBoard, testBoard) + m1.size;
+    testBoard.undoMove(m1.move, und);
+    und = testBoard.doMove(m2.move);
+    int dist2 = guessDistance(solvedBoard,testBoard) + m2.size;
     return (dist2 - dist1);
   }
 }
